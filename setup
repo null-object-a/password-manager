@@ -1,0 +1,25 @@
+#!/usr/bin/python3
+import argparse, os, sys
+from shutil import *
+parser = argparse.ArgumentParser(description='Build Script')
+parser.add_argument('-p', dest='password', type=str, help='Password used for database.', required=True)
+parser.add_argument('-k', dest='key', type=str, help='Key used for encryption.', required=True)
+args = parser.parse_args()
+os.system("pip install -r requirements.txt")
+if not os.geteuid() == 0:
+    sys.exit("Root priviledges are required for build.")
+with open("./pm/main.py","r") as f:
+    replaced = f.read().replace("$PASSWORD", args.password).replace("$KEY", args.key)
+    f.close()
+    open("./pm/main.py", "w").write(replaced)
+with open("./setup.sql","r") as f:
+    replaced = f.read().replace("$PASSWORD", args.password)
+    f.close()
+    open("./setup.sql", "w").write(replaced)
+try:
+    os.system("rm /bin/pm")
+except:
+    pass
+copyfile(r"./pm/main.py", r"/bin/pm")
+os.system("chmod +x /bin/pm")
+sys.exit("Build complete, run setup.sql for database creation.")
